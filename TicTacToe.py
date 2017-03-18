@@ -25,7 +25,7 @@ active_player = "Player One"
 active_sign = "X"
 current_status = "Pending"
 gamestate = [[7, 8, 9], [4, 5, 6], [3, 2, 1]]
-
+keycount = 0    # after 9 valid keys, it's a draw
 
 def change_active_player():
     '''
@@ -42,7 +42,7 @@ def change_active_player():
         active_sign = "X"
     pass
 
-def display_grid():
+def display_grid(nextTurn):
     '''
     this function displays the current gameboard
     a 3x3 grid
@@ -50,8 +50,9 @@ def display_grid():
     for row in gamestate:
         print(row)
 
-    print_padding()
-    print("It is {}'s turn".format(active_player))
+    if nextTurn:
+        print_padding()
+        print("It is {}'s turn".format(active_player))
     pass
 
 def update_grid(choice):
@@ -81,16 +82,17 @@ def get_user_input():
             exit(0)
         valid_input = validate_input(userInput)
 
-    determine_game_status()
     return userInput
 
 def validate_input(user_input):
     '''
     returns true if the user input is 1 - 9, else false
     '''
+    global keycount
     numbers = string.digits[1:]
     for number in numbers:
         if user_input == number:
+            keycount = keycount + 1
             return True
 
     print("Your choice must be a number 1 - 9")
@@ -101,8 +103,37 @@ def determine_game_status():
     returns one of the following strings:
     Pending, X wins, O wins, Draw
     '''
-    
+    winner = False
 
+    # we're going to use brute force to determine the game status
+    # 7 gamestate[0][0]
+    # 4 gamestate[1][0]
+    # 8 gamestate[0][1]
+    if gamestate[0][0] == gamestate[0][1] and gamestate[0][1] == gamestate[0][2]: #top row
+        winner = True
+    elif gamestate[1][0] == gamestate[1][1] and gamestate[1][1] == gamestate[1][2]: # middle row
+        winner = True
+    elif gamestate[2][0] == gamestate[2][1] and gamestate[2][1] == gamestate[2][2]: # bottom row
+        winner = True
+    elif gamestate[0][0] == gamestate[1][0] and gamestate[1][0] == gamestate[2][0]: #left column
+        winner = True
+    elif gamestate[0][1] == gamestate[1][1] and gamestate[1][1] == gamestate[2][1]: #mid column
+        winner = True
+    elif gamestate[0][2] == gamestate[1][2] and gamestate[1][2] == gamestate[2][2]: #right column
+        winner = True
+    elif gamestate[0][0] == gamestate[1][1] and gamestate[1][1] == gamestate[2][2]: #left-to-right diagonal
+        winner = True
+    elif gamestate[0][2] == gamestate[1][1] and gamestate[1][1] == gamestate[2][0]:
+        winner = True
+    else:
+        winner = False
+
+    if winner:
+        change_active_player()
+        display_grid(False)
+        print_padding()
+        print("Congratulations " + active_player + "! You've won!")
+        exit(0)
 
 def print_padding():
     '''
@@ -120,11 +151,19 @@ def welcome_players():
     print("The game is played by using the numpad on your keyboard")
     print("It looks like this:")
     print_padding()
-    display_grid()
+    display_grid(True)
     print_padding()
 
 welcome_players()
-while current_status == "Pending":
-    display_grid()
+while keycount < 10:
+    display_grid(True)
     choice = get_user_input()
     update_grid(choice)
+    determine_game_status()
+
+# if we get to here, it's a draw
+print_padding()
+print("Oh no, we suck again!")
+print("(it's a draw)")
+print("Fuck off")
+exit(0)
